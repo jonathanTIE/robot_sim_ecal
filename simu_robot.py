@@ -18,6 +18,8 @@ except ModuleNotFoundError as e:
     INTERFACE = "CONSOLE"
     #impo as m
 
+from robot_sim_enac.ecal5_interface import ecal5Interface
+
 
 class Robot:
     
@@ -40,6 +42,9 @@ class Robot:
         if(INTERFACE == "CONSOLE"):
             print("using console interface - Wasn't launched with ROS")
             self.com = LocalDebug(robot_name)
+        elif(INTERFACE == "ECAL5"):
+            print("using ecal5 Interface")
+            self.com = ecal5Interface(robot_name)
         else:
             self.com = RosInterface(robot_name)
         self.com.start()
