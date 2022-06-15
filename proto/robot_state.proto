@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package enac;
+
+//SPEED_REG = "SpeedCmd {} (.+) (.+) (.+)"
+//POS_REG = "PosCmd {} (.+) (.+)"
+//POS_ORIENT_REG = "PosCmdOrient {} (.+) (.+) (.+)"
+//ACTUATOR_CMD = "ActuatorCmd {} (.+) (.+)"
+//ACTUATORS_REQUEST = "ActuatorsRequest {}"
+//
+//ACTUATOR_DECL = "ActuatorDecl {} {} {} {} {} {} {}"
+//POS_REPORT = "PosReport {} {} {} {}"
+//ACTUATOR_REPORT = "ActuatorReport {} {} {}"
+//
+//KILL_CMD = "Shutdown {}"
+
+message Position {
+    float x = 1;
+    float y = 2;
+    float theta = 3;
+}
+
+message Speed {
+    float vx = 1;
+    float vy = 2;
+    float vtheta = 3;
+}
+
+message Odom {
+    Position position = 1;
+    Speed speed = 2;
+    double timestamp = 3; 
+}
