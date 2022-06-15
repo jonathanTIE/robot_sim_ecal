@@ -2,14 +2,12 @@
 
 A simple robot simulator, to be used by students as test bench for a programming project.
 
-It currently can output for debugging purpose on the console, and should be used with ros2.
+It should be used with eCAL(5.10).
 
-~~It currently use Ivy to communicate, but Serial and Redis interfaces may be added in the future.~~
 
 # Usage
 
-Just execute `robot_sim.py` for local debug
+Just execute `robot_sim.py` in `robot_sim_ecal` to launch the simulator
 
-To launch ros node : 
-`ros2 run robot_sim_enac simu_robot`
+For basic console control (forward, backward,... ), execute `dyn_pub.py` in `ecal_enac/experiments`
 
