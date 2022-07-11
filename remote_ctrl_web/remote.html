@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr-FR">
+
+<head>
+    <!-- import css -->
+    <link rel="stylesheet" href="picniss.css">
+    <script src="connexion.js"></script>
+    <title>Remote control for enac robot 2022</title>
+</head>
+
+<div>
+    <div id="navbar"></div>
+    <div id="status">
+        <table>
+            <tr>
+                <td id="connexion_status">Déconnecté</td>
+                <!-- Connexion proxy/Direct-->
+            </tr>
+            <tr>
+                <!--<td>Nb avec la commande/Nb connectés</td>-->
+                <td id="cmd_status">AVANCER 10/15</td>
+            </tr>
+        </table>
+    </div>
+    <div id="buttons">
+        <button onclick="forward()">Avancer</button>
+        <button onclick="left()">Gauche</button>
+        <button class="error" onclick="stop()">STOP</button>
+        <button onclick="right()">Droite</button>
+        <button onclick="backward()">Reculer</button>
+    </div>
+</div>
