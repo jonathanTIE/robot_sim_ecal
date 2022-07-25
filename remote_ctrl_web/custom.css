@@ -16,3 +16,9 @@ div {
     margin-left: 20px;
     margin-right:20px;
 }
+
+.hor_center { 
+    display: table;
+    margin: 0 auto;
+    padding: 10px;
+}

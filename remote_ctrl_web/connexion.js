@@ -1,4 +1,4 @@
-var url = "localhost:8080"; //https://socketsbay.com/test-websockets
+var url = "192.168.42.226/ws"; //https://socketsbay.com/test-websockets
 var ws = new WebSocket("ws://" + url);
 var last_cmd_stamp = 1.0; //used to timeout and prevent user to send too many request quickly
 
@@ -33,30 +33,30 @@ function check_stamp() {
 //Trigger forward when the button is clicked 
 function forward(params) {
     if(check_stamp()) {
-        ws.send("forward");
+        ws.send("f");
     }
 }
 
 function backward(params) {
     if(check_stamp()) {
-        ws.send("backward");
+        ws.send("b");
     }
 }
 
 function left(params) {
     if(check_stamp()) {
-        ws.send("left");
+        ws.send("l");
     }
 }
 
 function right(params) {
     if(check_stamp()) {
-        ws.send("right");
+        ws.send("r");
     }
 }
 
 function stop(params) {
     if(check_stamp()) {
-        ws.send("stop");
+        ws.send("s");
     }
 }

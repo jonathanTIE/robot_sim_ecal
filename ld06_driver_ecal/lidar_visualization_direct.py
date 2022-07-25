@@ -1,9 +1,12 @@
+#This python script visualize using matplotlib the serial outpuf of the lidar
+
 import serial
 import binascii
 from CalcLidarData import CalcLidarData
 import matplotlib.pyplot as plt
 import math
 
+SERIAL_PORT = '/dev/tty.usbserial-0001'
 fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111, projection='polar')
 ax.set_title('lidar (exit: Key E)',fontsize=18)
@@ -11,7 +14,7 @@ ax.set_title('lidar (exit: Key E)',fontsize=18)
 # Eキーを押すと終了します。
 plt.connect('key_press_event', lambda event: exit(1) if event.key == 'e' else None)
 
-ser = serial.Serial(port='/dev/tty.usbserial-0001',
+ser = serial.Serial(port=SERIAL_PORT,
                     baudrate=230400,
                     timeout=5.0,
                     bytesize=8,

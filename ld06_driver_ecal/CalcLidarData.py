@@ -3,9 +3,9 @@ import math
 
 class LidarData:
     def __init__(self,FSA,LSA,CS,Speed,TimeStamp,Confidence_i,Angle_i,Distance_i):
-        self.FSA = FSA
-        self.LSA = LSA
-        self.CS = CS
+        self.FSA = FSA #start angle  - firSt Angle
+        self.LSA = LSA #last angle -  laSt Angle
+        self.CS = CS #CheckSum
         self.Speed = Speed
         self.TimeStamp = TimeStamp
 
@@ -19,7 +19,7 @@ def CalcLidarData(str):
     str = str.replace(' ','')
 
     Speed = int(str[2:4]+str[0:2],16)/100
-    FSA = float(int(str[6:8]+str[4:6],16))/100
+    FSA = float(int(str[6:8]+str[4:6],16))/100 
     LSA = float(int(str[-8:-6]+str[-10:-8],16))/100
     TimeStamp = int(str[-4:-2]+str[-6:-4],16)
     CS = int(str[-2:],16)
