@@ -6,7 +6,8 @@ import sys, os, time
 # Append parent directory to import path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-import proto.py.lidar_data_pb2 as lidar_data
+#import proto.py.lidar_data_pb2 as lidar_data
+import lidar_data_pb2 as lidar_data
 from CalcLidarData import CalcLidarData
 
 SERIAL_PORT = '/dev/tty.usbserial-0001'

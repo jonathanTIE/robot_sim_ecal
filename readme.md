@@ -37,6 +37,7 @@ Une fois protobuf installé, on peut exécuter soit :
 #### TODO 
 
 Dans le requirements.txt, installer les proto & les ecal_lib custom
+(Refactoriser pour n'avoir qu'un fichierpour les pb2 en tant que module et pas le mettre dans tous les dossiers)
 
 #### Requirements.txt
 
