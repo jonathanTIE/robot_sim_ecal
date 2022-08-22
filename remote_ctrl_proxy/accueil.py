@@ -7,6 +7,8 @@ import websockets
 import asyncio
 
 ROBOT_URL = "ws://192.168.42.226/ws"
+PROXY_URL = "localhost" 
+PROXY_PORT = 5000
 
 users_cmds = {} #remote address : last cmd received  #remote address = (IP of user, port)
 cur_ws = [] #list of all websockets of connected users
@@ -60,7 +62,7 @@ async def periodic_robot_cmd(robot_ws=None):
 async def count_check_connected_users():
     #remove the inactive users commands and count the active users
     global active_users, majority_cmd
-    ws_str_to_user = {"f": "AVANCER", "b": "RECULER", "l": "GAUCHE", "r":"RECULER", "s":"STOP", None:"STOP"}
+    ws_str_to_user = {"f": "AVANCER", "b": "RECULER", "l": "GAUCHE", "r":"DROITE", "s":"STOP", None:"STOP"}
     while True:
         count = 0
         for ws in cur_ws:
@@ -71,15 +73,13 @@ async def count_check_connected_users():
         for ws in cur_ws:
             await ws.send(f"Choix {ws_str_to_user[majority_cmd]} de {majority_cmd_users}/{active_users}")
         active_users = count
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
 
 async def main():
-    #async with websockets.connect(ROBOT_URL) as robot_ws:
-    #    asyncio.create_task(periodic_robot_cmd(robot_ws))
     print("CAREFUL, sending msg through WS not implemented, only receiving")
     asyncio.create_task(periodic_robot_cmd())
     asyncio.create_task(count_check_connected_users())
-    async with websockets.serve(on_ws, "localhost", 5000) as server:
+    async with websockets.serve(on_ws, PROXY_URL, PROXY_PORT) as server:
         await asyncio.Future()  # run forever
 
 

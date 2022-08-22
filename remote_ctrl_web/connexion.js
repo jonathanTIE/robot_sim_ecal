@@ -1,10 +1,11 @@
-var url = "127.0.0.1:5000" //"192.168.42.226/ws"; //https://socketsbay.com/test-websockets
+var url = "localhost:5000" //"192.168.42.226/ws"; //https://socketsbay.com/test-websockets
 var ws = new WebSocket("ws://" + url);
 var last_cmd_stamp = 1.0; //used to timeout and prevent user to send too many request quickly
 
 //Websocket callbacks : 
 ws.onopen = function(evt) { 
-    document.getElementById("connexion_status").innerHTML = "Connecté" };
+    document.getElementById("connexion_status").innerHTML = "Connecté" 
+};
 ws.onclose = function(evt) {
     document.getElementById("connexion_status").innerHTML = "Déconnecté"
  };
