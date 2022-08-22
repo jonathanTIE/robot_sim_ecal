@@ -66,3 +66,4 @@ if __name__ == "__main__":
         print(msg_type)
         for field in msg:
             print(f"field named {field['name']} of type {field['type']}")
+            

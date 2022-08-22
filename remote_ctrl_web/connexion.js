@@ -1,4 +1,4 @@
-var url = "192.168.42.226/ws"; //https://socketsbay.com/test-websockets
+var url = "127.0.0.1:5000" //"192.168.42.226/ws"; //https://socketsbay.com/test-websockets
 var ws = new WebSocket("ws://" + url);
 var last_cmd_stamp = 1.0; //used to timeout and prevent user to send too many request quickly
 
@@ -18,6 +18,7 @@ ws.onmessage = function(evt) {
     //if format correct
     //Parse command majoritaire and nb connecté/nb pour la cmd
     console.log( "Received Message: " + evt.data); 
+    document.getElementById("cmd_status").innerHTML = evt.data
 };
 
 

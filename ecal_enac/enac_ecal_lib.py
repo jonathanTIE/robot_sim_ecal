@@ -17,4 +17,3 @@ def log_error(msg:str):
     ecal_core.log_setlevel(4) #''fatal'' 
     ecal_core.log_message(msg)
     ecal_core.log_setlevel(1) #reset to 0 by default
-    

@@ -4,6 +4,7 @@ package enac;
 
 message Lidar {
     int32 nb_pts = 1;
-    repeated float angles = 2;
-    repeated float distances = 3;
+    float angle_increment = 2;
+    repeated float angles = 3;
+    repeated float distances = 4;
 }
