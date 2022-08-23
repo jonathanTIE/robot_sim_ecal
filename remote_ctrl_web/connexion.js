@@ -1,4 +1,4 @@
-var url = "localhost:5000" //"192.168.42.226/ws"; //https://socketsbay.com/test-websockets
+var url = "192.168.42.124:5000" //"192.168.42.226/ws"; //https://socketsbay.com/test-websockets
 var ws = new WebSocket("ws://" + url);
 var last_cmd_stamp = 1.0; //used to timeout and prevent user to send too many request quickly
 

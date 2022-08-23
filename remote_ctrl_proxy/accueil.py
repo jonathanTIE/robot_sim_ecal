@@ -6,8 +6,10 @@ import websockets
 
 import asyncio
 
+DEBUG = False
+
 ROBOT_URL = "ws://192.168.42.226/ws"
-PROXY_URL = "localhost" 
+PROXY_URL = "192.168.42.124" 
 PROXY_PORT = 5000
 
 users_cmds = {} #remote address : last cmd received  #remote address = (IP of user, port)
@@ -50,14 +52,18 @@ def fusion_cmd(list_of_cmds: list()):
             cmd_to_send = key
     return (cmd_to_send, max_val)
 
-async def periodic_robot_cmd(robot_ws=None):
-    global majority_cmd_users, majority_cmd
-    while True:
-        cmd, majority_cmd_users = fusion_cmd(users_cmds.values())
-        majority_cmd = cmd
-        #await robot_ws.send(cmd)
-        print(f"sent to robot {cmd}")
-        await asyncio.sleep(0.100) #send at ~10 hz the commands
+async def periodic_robot_cmd():
+    global majority_cmd_users, majority_cmd, DEBUG
+    async with websockets.connect(ROBOT_URL) as websocket:
+        while True:
+            cmd, majority_cmd_users = fusion_cmd(users_cmds.values())
+            majority_cmd = cmd
+            if cmd == None:
+                cmd = "s"
+            if not DEBUG:
+                await websocket.send(cmd)
+            print(f"sent to robot {cmd}")
+            await asyncio.sleep(0.100) #send at ~10 hz the commands
 
 async def count_check_connected_users():
     #remove the inactive users commands and count the active users
@@ -76,8 +82,10 @@ async def count_check_connected_users():
         await asyncio.sleep(0.25)
 
 async def main():
-    print("CAREFUL, sending msg through WS not implemented, only receiving")
-    asyncio.create_task(periodic_robot_cmd())
+    if DEBUG:
+        asyncio.create_task(periodic_robot_cmd())
+    else:
+        asyncio.create_task(periodic_robot_cmd())
     asyncio.create_task(count_check_connected_users())
     async with websockets.serve(on_ws, PROXY_URL, PROXY_PORT) as server:
         await asyncio.Future()  # run forever
