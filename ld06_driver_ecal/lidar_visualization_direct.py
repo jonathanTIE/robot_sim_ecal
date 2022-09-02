@@ -6,7 +6,7 @@ from CalcLidarData import CalcLidarData
 import matplotlib.pyplot as plt
 import math
 
-SERIAL_PORT = '/dev/tty.usbserial-0001'
+SERIAL_PORT = 'COM4'
 fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111, projection='polar')
 ax.set_title('lidar (exit: Key E)',fontsize=18)

@@ -1,5 +1,5 @@
 import serial
-import ecal.core as ecal_core
+import ecal.core.core as ecal_core
 from ecal.core.publisher import ProtoPublisher
 
 import sys, os, time
@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 import lidar_data_pb2 as lidar_data
 from CalcLidarData import CalcLidarData
 
-SERIAL_PORT = '/dev/tty.usbserial-0001'
+SERIAL_PORT = 'COM4'
 
 ser = serial.Serial(port=SERIAL_PORT,
                     baudrate=230400,
@@ -31,9 +31,9 @@ pub = ProtoPublisher("lidar_data", lidar_data.Lidar)
 def publish_reading(angles, distances):
     #once the program finished to read a full circle reading from lidar, publlish it to eCAL with protobuf format
     lidar_msg = lidar_data.Lidar()
-    lidar_msg.angles = angles 
-    lidar_msg.distances = distances
-    pub.send(lidar_msg, time.time())
+    lidar_msg.angles.extend(angles)
+    lidar_msg.distances.extend(distances)
+    pub.send(lidar_msg, ecal_core.getmicroseconds()[1])
     
 if __name__ == '__main__':
     #read data continuously
