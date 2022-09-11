@@ -21,4 +21,6 @@ This code can use  Lidar's LD06 (LDS06) provided by LDROBOT from python. and It 
 # LICENSE
 Please see [LICENSE](https://github.com/henjin0/LIDAR_LD06_python_loder/blob/main/LICENSE).
 Forked by jonathanTIE from [henjin0](https://github.com/henjin0/LIDAR_LD06_python_loder)
-+ using forks for understanding codes
++ using forks for understanding codes :
+https://github.com/hopkira/LIDAR_LD06_python_loder/blob/main/LIDARredis.py
+https://github.com/drinking-code/ldrobot-ld06-lidar-python-driver/blob/master/listen_to_lidar.py
