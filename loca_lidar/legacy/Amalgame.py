@@ -1,17 +1,25 @@
+from enum import Enum
 from Point import Point
 import math
 
-angle_increment = 0.013877294957637787
-
+#Theoritical shape of the regrouped points | could be used to calculate more precisely the center of the amalgame using presumed shape
+class Shape(Enum):
+    CLOUD = 1
+    #CIRCLE = 2
 
 class Amalgame:
-    def __init__(self, list_points):
-        self.type = ""
+    """group of 2D points that should correspond to one single object (for example, a "beacon", a robot, ...)
+    """
+    def __init__(self, list_points, shape = Shape.CLOUD):
+        self.shape = shape
         self.list_points = list_points
-        self.relative_center = self._calculate_relative_center()
+        self.relative_center = self._calculate_relative_center() #TODO : disjonction de cas selon le "shape"
         self.absolute_position = []
         self.size = self.get_size_amalgame()
         #print("TAILLE", self.size)
+
+    @classmethod
+        def from_cloud_points(cls, list_points): #[(x)]
 
     def _calculate_relative_center(self):
         new_p = Point()
