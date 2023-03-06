@@ -1,9 +1,9 @@
 from math import isclose, radians, pi, atan, degrees
 from functools import cache
 import numpy as np
-import CloudPoints as CPts
-import FixedPoints as FPts
-from PointsDataStruct import CartesianPoints
+import CloudPoints as cp
+import FixedPoints as fp
+from PointsDataStruct import CartesianPts
 import time
 import logging
 
@@ -23,7 +23,7 @@ class PatternFinder:
         self.error_margin = error_margin
         self._generate_candidate_table_cache()
         nb_pts = np.unique(np.append(self.dist_pts_reference['pt1'],self.dist_pts_reference['pt2'])).size
-        self.table_pivot_dist = {pivot_index: CPts.get_distances_from_pivot(pivot_index, self.dist_pts_reference) 
+        self.table_pivot_dist = {pivot_index: cp.get_distances_from_pivot(pivot_index, self.dist_pts_reference) 
             for pivot_index in range(nb_pts)}
         #example dictionnary {0: ((0, 1, 0.3242), (0, 2, 0.231)), ...}
         pass 
@@ -38,7 +38,7 @@ class PatternFinder:
             #TODO : convert to binary search ?
             for candidate_table_point in self._get_candidates_table_point(detected_DistPts[2]): #check only the first point as "pivot"
                 table_dists = self.table_pivot_dist[candidate_table_point]
-                dists_from_pivot = CPts.get_distances_from_pivot(detected_DistPts[0], dist_pts_lidar)
+                dists_from_pivot = cp.get_distances_from_pivot(detected_DistPts[0], dist_pts_lidar)
                 
                 #Test candidate_table_point - finding others distance of candidate/Beacon :
                 lidar_to_table_pts = self._lidar2table_from_pivot(candidate_table_point, dists_from_pivot, table_dists)
@@ -84,7 +84,7 @@ class Triangulate():
 
     #https://stackoverflow.com/questions/20546182/how-to-perform-coordinates-affine-transformation-using-python-part-2?answertab=votes#tab-top
     @staticmethod
-    def lidar_pos_wrt_table(lidar_to_table, lidar_amalgames, fixed_pts = FPts.known_points())-> tuple[float, float]:
+    def lidar_pos_wrt_table(lidar_to_table, lidar_amalgames, fixed_pts = fp.known_points())-> tuple[float, float]:
         """returns average computed (x,y, angle) in meters, meters, radians using Least Square
 
         Args:
@@ -114,7 +114,7 @@ class Triangulate():
         return lidar_wrt_table
 
     @staticmethod
-    def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixed_pts = FPts.known_points()):
+    def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixed_pts = fp.known_points()):
         """Determine lidar angle compared to vertical axis pointing up in table/world frame
         
         Args:
@@ -193,7 +193,7 @@ class Triangulate():
 
 
 if __name__ == "__main__":
-    finder = PatternFinder(FPts.known_distances(), 0.02)
-    lidar2table = finder.find_pattern(CPts.get_distances())
-    lidarpos = Triangulate.lidar_pos_wrt_table(lidar2table, CPts.amalgame_sample_1)
-    print(Triangulate.lidar_angle_wrt_table(lidarpos, lidar2table, CPts.amalgame_sample_1))
+    finder = PatternFinder(fp.known_distances(), 0.02)
+    lidar2table = finder.find_pattern(cp.get_distances())
+    lidarpos = Triangulate.lidar_pos_wrt_table(lidar2table, cp.amalgame_sample_1)
+    print(Triangulate.lidar_angle_wrt_table(lidarpos, lidar2table, cp.amalgame_sample_1))
