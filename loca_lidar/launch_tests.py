@@ -3,13 +3,14 @@ import numpy as np
 import PatternFinder 
 import FixedPoints as fp
 import CloudPoints as cp
-from  PointsDataStruct import PolarPts
+from  PointsDataStruct import PolarPts, AmalgamePolar
 
 ######### Test amalgame discovery from cloud points ############
 
 def test_one_amalgame():
     # Amalgame between 10° & 20°
     # Check if amalgame is detected if only the amalgame is detected by lidar and nothing else (except dummy points)
+    # + test if the algorithm isn't looping
     pts_test = np.array([
         (0.01, 0),
         (0.01, 1),
@@ -56,7 +57,111 @@ def test_one_amalgame():
     ], dtype=PolarPts)
     basic_filtered = cp.basic_filter_pts(pts_test)
     assert np.array_equal(basic_filtered, pts_filtered)
-    cp.amalgames_from_cloud(basic_filtered)
+    amalgames = cp.amalgames_from_cloud(basic_filtered)
+    assert np.isclose(amalgames[0]['size'], 0.17431148)
+    assert np.isclose(amalgames[0]['center_polar']['angle'], 15.0)
+    assert np.isclose(amalgames[0]['center_polar']['distance'], 1.0)
+    filtered_amalgames = cp.filter_amalgame_size(amalgames)
+    assert filtered_amalgames.size == 0 #size is 0.18, above 0.15 so we shoudl'nt find amalgame
+
+def test_continuous_amalgame(): 
+    #test one amalgame present at beggining and end of scan
+    #test two amalgames that are different but are next to each other in the scan
+    # test one amalgame present randomly
+    pts_test = np.array([
+        (1.0, 0),
+        (1.0, 1),
+        (0.01, 2),
+        (0.01, 3),
+        (0.01, 4),
+        (0.01, 5),
+        (0.01, 6),
+        (2.5, 7),
+        (2.5, 8),
+        (2.5, 9),
+        (2.5, 10), #two close (when sorting by polar angle) amalgames
+        (1.5, 11), 
+        (1.5, 12),
+        (1.5, 13),
+        (1.5, 14),
+        (3.50, 15),
+        (3.50, 16),
+        (3.50, 17),
+        (3.50, 18),
+        (0.7, 19), #random amalgame
+        (0.7, 20),
+        (0.7, 21),
+        (0.7, 22),
+        (0.01, 23),
+        (0.01, 24),
+        (0.01, 25),
+        (1.0, 358),
+        (1.0, 359),
+    ], dtype=PolarPts)
+
+    basic_filtered = cp.basic_filter_pts(pts_test)
+    amalgames = cp.amalgames_from_cloud(basic_filtered)
+    filtered_amalgames = cp.filter_amalgame_size(amalgames)
+    # Test filtration :
+    expected_filter = np.array([(2.5, 8.5)], dtype=PolarPts)
+    assert filtered_amalgames['center_polar'] == expected_filter
+    # Testing calculation of relative center : 
+    tuple_amalgames = cp.amalgame_numpy_to_tuple(amalgames)
+    
+    # TODO : expected amalgames fill
+    assert tuple_amalgames == (())
+
+def test_continuous_amalgame_two():
+    pts_test = np.array([
+        (1.0, 0),
+        (1.0, 1),
+        (0.01, 2),
+        (0.01, 3),
+        (0.01, 4),
+        (0.01, 5),
+        (0.01, 6),
+        (0.01, 7),
+        (0.01, 8),
+        (0.01, 9),
+        (3.50, 10), 
+        (3.50, 11), 
+        (3.50, 12),
+        (3.50, 13),
+        (3.50, 14),
+        (3.50, 15),
+        (3.50, 16),
+        (3.50, 17),
+        (3.50, 18),
+        (3.50, 19),
+        (3.50, 20),
+        (0.01, 21),
+        (0.01, 22),
+        (0.01, 23),
+        (0.01, 24),
+        (0.01, 25),
+        (1.0, 26),
+        (1.0, 27),
+    ], dtype=PolarPts)
+
+    pts_filtered = np.array([
+        (1.0, 10), #expected size : 0.18
+        (1.0, 11), #expected center : (1, 15)
+        (1.0, 12),
+        (1.0, 13),
+        (1.0, 14),
+        (1.0, 15),
+        (1.0, 16),
+        (1.0, 17),
+        (1.0, 18),
+        (1.0, 19),
+        (1.0, 20),
+    ], dtype=PolarPts)
+    basic_filtered = cp.basic_filter_pts(pts_test)
+    assert np.array_equal(basic_filtered, pts_filtered)
+    amalgames = cp.amalgames_from_cloud(basic_filtered)
+    empty_amalgame = np.zeros((20,), dtype=AmalgamePolar)
+    assert np.array_equal(amalgames, empty_amalgame) #size is 0.18, above 0.15 so we shoudl'nt find amalgame
+
 
 ######### Test finding pattern from amalgames
 # maximum error tolerance set for unit tests is 2mm for 2D lidar pose estimation 

@@ -93,14 +93,46 @@ def get_distances_from_pivot(pt_index: np.int64, pt_distances: np.ndarray):
             distances_of_pivot[i] = (distances_of_pivot[i][1], distances_of_pivot[i][0], distances_of_pivot[i][2])
     return distances_of_pivot
 
+def _fill_amalgame(amalgame:AmalgamePolar_t) -> AmalgamePolar_t:
+    last_i = np.max(np.nonzero(amalgame['list_pts']['distance']))
+    # Calculate amalgame relative center 
+    avg_pts_dist = amalgame['list_pts']['distance'][:last_i+1].mean()
+    avg_pts_angle = amalgame['list_pts']['angle'][:last_i+1].mean()
+    amalgame['center_polar']['distance'] = avg_pts_dist
+    amalgame['center_polar']['angle'] = avg_pts_angle
+
+    # Calculate amalgame size :
+    first_pt, last_pt = amalgame['list_pts'][0], amalgame['list_pts'][last_i]
+    amalgame['size'] = np.sqrt(get_squared_dist_polar(first_pt, last_pt))
+    return amalgame
+
+def _fusion_amalgames(amalgame1:AmalgamePolar_t, amalgame2:AmalgamePolar_t, angle_norm = True) -> AmalgamePolar_t:
+    # Function to manage the case when an amalgame is present at both beggining and end of scan
+    # angle_norm : set to true to manage case of when angles are close to 360 and close to 0 for mean computation
+    i_first_zero = np.where(amalgame1['list_pts']['distance'] == 0)[0][0]
+    amalgame1['list_pts'] = np.concatenate((amalgame1['list_pts'][:i_first_zero], amalgame2['list_pts'][:-i_first_zero]))
+
+    # recalculate size & center
+    amalgame1 = _fill_amalgame(amalgame1)
+    #manage case if fusion from points close to 360 AND 0 at the same time : 
+    # https://stackoverflow.com/a/491784
+    if angle_norm:
+        last_i = np.where(amalgame1['list_pts']['distance'] == 0)[0][0]
+        sum_sin = np.sum(np.sin(np.deg2rad(amalgame1['list_pts'][:last_i]['angle'])))
+        sum_cos = np.sum(np.cos(np.deg2rad(amalgame1['list_pts'][:last_i]['angle'])))
+        angle = np.rad2deg(np.arctan2(sum_sin, sum_cos))
+        angle = angle if angle >= 0 else 360 + angle
+        amalgame1['center_polar']['angle'] = angle
+
+    return amalgame1
+
 def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
-    """
-        pts : in polar coordinates,  np.ndarray[PolarPoints]
-    """
     amalgames = np.zeros((20, ), dtype=AmalgamePolar) # Hypothesis that we won't detect more than 20 valid amalgames per scan
     amalg_i, amalg_pt_count = 0, 0
 
     #TODO : optimize below using numpy
+    # Known limitation : if an amalgame made of two points is present only at the beggining and end of filtered scan, it won't be detected
+    # But we consider that an amalgame should be made of at least three points
     for i, pt in enumerate(pts):
         #initialize first cur_pt
         if amalg_pt_count == 0: 
@@ -108,35 +140,53 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
             amalg_pt_count += 1
             continue
 
-        # check if point could be part of the same amalgame as pt, and add it if so
         cur_pt = amalgames[amalg_i]['list_pts'][amalg_pt_count -1] #last added point in the amalgame
+
+        # makes sure to finish last amalgame and adding last pt
+        if i == pts.size - 1 and get_squared_dist_polar(cur_pt, pt) <= config.amalgame_squared_dist_max:
+            amalgames[amalg_i]['list_pts'][amalg_pt_count] = pt
+
+        # if next point is not part of the amalgame currently being discovered, finish it
+        # or if finishing pts
+        if (get_squared_dist_polar(cur_pt, pt) > config.amalgame_squared_dist_max
+            or i == pts.size - 1): # this condition makes sure to finish the last amalgame if reaching the end of the pts list
+            if amalg_pt_count >= 1:
+                #calculate rel center & size : 
+                amalgames[amalg_i] = _fill_amalgame(amalgames[amalg_i])
+                amalg_i += 1 
+            else: #we start another amalgame from the same index 
+                amalgames[amalg_i] = np.zeros((1, ))
+            amalg_pt_count = 1
+            amalgames[amalg_i]['list_pts'][0] = pt
+            continue
+
+        # check if point could be part of the same amalgame as pt, and add it if so
         if get_squared_dist_polar(cur_pt, pt) <= config.amalgame_squared_dist_max:
             amalgames[amalg_i]['list_pts'][amalg_pt_count] = pt
             amalg_pt_count += 1
         
-        # if next point is not part of the amalgame currently being discovered, finish it
-        if get_squared_dist_polar(cur_pt, pt) > config.amalgame_squared_dist_max \
-            or i == pts[1:].size: # this condition makes sure to finish the last amalgame if reaching the end of the pts list
-            last_i = np.max(np.nonzero(amalgames[amalg_i]['list_pts']['distance']))
-            # Calculate amalgame relative center 
-            avg_pts_dist = amalgames[amalg_i]['list_pts']['distance'][:last_i+1].mean()
-            avg_pts_angle = amalgames[amalg_i]['list_pts']['angle'][:last_i+1].mean()
-            amalgames[amalg_i]['center_polar']['distance'] = avg_pts_dist
-            amalgames[amalg_i]['center_polar']['angle'] = avg_pts_angle
+    # if first and last amalgame actually belong to the same amalgame, fusion them
+    if amalg_i > 1: #if more than 2 amalgames detected
+        #get index of last point added to amalgame
+        last_i = np.max(np.nonzero(amalgames[amalg_i-1]['list_pts']['distance']))
+        first_pt_first_amalg = amalgames[0]['list_pts'][0]
+        last_pt_last_amalg = amalgames[amalg_i-1]['list_pts'][last_i]
+        if get_squared_dist_polar(first_pt_first_amalg, last_pt_last_amalg) <= config.amalgame_squared_dist_max:
+            amalgames[0] = _fusion_amalgames(amalgames[0], amalgames[amalg_i-1])
+            amalgames[amalg_i-1] = np.zeros((1, ))
 
-            # Calculate amalgame size :
-            first_pt, last_pt = amalgames[amalg_i]['list_pts'][0], amalgames[amalg_i]['list_pts'][last_i]
-            amalgames[amalg_i]['size'] = np.sqrt(get_squared_dist_polar(first_pt, last_pt))
-
-            #if amalgame is valid ("coherent size" ex :  not a wall, not a referee, ...)
-            if amalgames[amalg_i]['size'] > 0.08 and amalgames[amalg_i]['size'] < 0.15:
-                amalg_i += 1  
-            # if cur_amalgame is invalid, we reset it to use it
-            else: 
-                amalgames[amalg_i] = np.empty((1, ))
-            amalg_pt_count = 0
     return amalgames
 
+def filter_amalgame_size(amalgames:AmalgamePolar_t) -> AmalgamePolar_t:
+    #if amalgame is valid ("coherent size" ex :  not a wall, not a referee, ...)
+    mask = np.where((amalgames['size'] > config.amalg_min_size) & (amalgames['size'] < config.amalg_max_size))
+    valid_amalgames = amalgames[mask]
+    return valid_amalgames
+
+# This function filter out list of points, to only keep center of amalgames in polar coords
+def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> tuple():
+    last_i = np.max(np.nonzero(amalgames['center_polar']['distance']))
+    return tuple(amalgames[:last_i]['center_polar'])
 
 if __name__ == '__main__':
     get_distances(amalgame_sample_1)

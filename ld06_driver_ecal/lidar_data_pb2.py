@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='enac',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\x10lidar_data.proto\x12\x04\x65nac\"S\n\x05Lidar\x12\x0e\n\x06nb_pts\x18\x01 \x01(\x05\x12\x17\n\x0f\x61ngle_increment\x18\x02 \x01(\x02\x12\x0e\n\x06\x61ngles\x18\x03 \x03(\x02\x12\x11\n\tdistances\x18\x04 \x03(\x02\x62\x06proto3'
+  serialized_pb=b'\n\x10lidar_data.proto\x12\x04\x65nac\":\n\x05Lidar\x12\x0e\n\x06nb_pts\x18\x01 \x01(\x05\x12\x0e\n\x06\x61ngles\x18\x02 \x03(\x02\x12\x11\n\tdistances\x18\x03 \x03(\x02\x62\x06proto3'
 )
 
 
@@ -39,22 +39,15 @@ _LIDAR = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='angle_increment', full_name='enac.Lidar.angle_increment', index=1,
-      number=2, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='angles', full_name='enac.Lidar.angles', index=2,
-      number=3, type=2, cpp_type=6, label=3,
+      name='angles', full_name='enac.Lidar.angles', index=1,
+      number=2, type=2, cpp_type=6, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='distances', full_name='enac.Lidar.distances', index=3,
-      number=4, type=2, cpp_type=6, label=3,
+      name='distances', full_name='enac.Lidar.distances', index=2,
+      number=3, type=2, cpp_type=6, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -72,7 +65,7 @@ _LIDAR = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=26,
-  serialized_end=109,
+  serialized_end=84,
 )
 
 DESCRIPTOR.message_types_by_name['Lidar'] = _LIDAR

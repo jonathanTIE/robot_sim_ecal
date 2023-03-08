@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package enac;
+// package enac;
 
 message Lidar {
     int32 nb_pts = 1;
@@ -8,3 +8,4 @@ message Lidar {
     repeated float angles = 3;
     repeated float distances = 4;
 }
+

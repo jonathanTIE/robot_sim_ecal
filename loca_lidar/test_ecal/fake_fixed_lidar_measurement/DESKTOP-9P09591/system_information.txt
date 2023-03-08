@@ -1,0 +1,37 @@
+------------------------- SYSTEM ---------------------------------
+Version                  : v5.10.1 (20.05.2022)
+Platform                 : x64
+
+------------------------- CONFIGURATION --------------------------
+Default INI              : C:\ProgramData\eCAL\ecal.ini
+
+------------------------- NETWORK --------------------------------
+Host name                : DESKTOP-9P09591
+Network mode             : local
+Network ttl              : 2
+Network sndbuf           : 5 MByte
+Network rcvbuf           : 5 MByte
+Multicast group          : 239.0.0.1
+Multicast mask           : 0.0.0.15
+Multicast ports          : 14000 - 14010
+Bandwidth limit (udp)    : not limited
+
+------------------------- TIME -----------------------------------
+Synchronization realtime : "ecaltime-localtime"
+Synchronization replay   : 
+State                    :  synchronized 
+Master / Slave           :  Master 
+Status (Code)            : "everything is fine." (0)
+
+------------------------- PUBLISHER LAYER DEFAULTS ---------------
+Layer Mode INPROC        : off
+Layer Mode SHM           : auto
+Layer Mode TCP           : off
+Layer Mode UDP MC        : auto
+
+------------------------- SUBSCRIPTION LAYER DEFAULTS ------------
+Layer Mode INPROC        : on
+Layer Mode SHM           : on
+Layer Mode TCP           : on
+Layer Mode UDP MC        : on
+Npcap UDP Reciever       : off

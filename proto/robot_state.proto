@@ -31,3 +31,8 @@ message Odom {
     Speed speed = 2;
     double timestamp = 3; 
 }
+
+message HolonomicSpeed {
+    float speed = 1; // in meters
+    float angle = 2; // in degrees
+}
