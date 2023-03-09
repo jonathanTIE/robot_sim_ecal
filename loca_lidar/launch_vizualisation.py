@@ -3,27 +3,39 @@ from ecal.core.subscriber import ProtoSubscriber
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
 import sys
 import lidar_data_pb2 as lidar_data
 import time
 
-plt.ion()
+plt.style.use('ggplot')
+
+display_lidar = True
+
 fig = plt.figure()
 ax = fig.add_subplot(projection='polar')
 lidar_scatter = ax.scatter(0, 0)
+lidar_dist = np.array([0])
+lidar_theta = np.array([0])
 
 # on_lidar_scan
 def on_lidar_scan(topic_name, msg, time):
-    global lidar_scatter
-    dist = np.array(msg.distances)
-    theta = np.deg2rad(np.array(msg.angles))
-    # https://stackoverflow.com/questions/9867889/matplotlib-scatterplot-removal
-    lidar_scatter.remove()
-    lidar_scatter = ax.scatter(theta, dist)
-    # line1.set_ydata(theta)
-    # line1.set_xdata(dist)
-    
+    global lidar_dist, lidar_theta
+    lidar_dist = np.array(msg.distances)
+    lidar_theta = np.array(msg.angles)
 
+rax = fig.add_axes([0.005, 0.1, 0.1, 0.1])
+rax.get_xaxis().set_visible(False)
+rax.get_yaxis().set_visible(False)
+
+
+def switch_display_lidar(event): 
+    global display_lidar
+    display_lidar = not display_lidar
+
+bnext = Button(rax, 'raw_lidar', color='y')
+bnext.label.set_fontsize(8)
+bnext.on_clicked(switch_display_lidar)
 # position_filtered_scan
 
 # Amalgames center
@@ -34,26 +46,7 @@ def on_lidar_scan(topic_name, msg, time):
 
 
 
-curScatter = None
-
-def callback(topic_name, msg, time):
-    global curScatter
-    with plt.ion():
-        if curScatter != None:
-            curScatter.remove()
-            curScatter = None
-        curScatter = plt.scatter(msg.angles, msg.distances, c="pink", s=5)
-
-
-def draw(): 
-    pass
-
-def start_plot():
-    plt.ion()
-    
-
 if __name__ == "__main__":
-    start_plot()
     
 
     # Init ecal Communication
@@ -63,44 +56,14 @@ if __name__ == "__main__":
     sub_lidar.set_callback(on_lidar_scan)
     # Init matplotlib plot
 
-    plt.show()
+    lastax = None
+    plt.show(block=False)
     while ecal_core.ok():
-        plt.pause(0.05)
-"""
-plt.axes(projection = 'polar')
-ax = plt.gca()
-ax.set_ylim([0, 20])
-plt.show()
+        if lastax != None: 
+            ax.cla()
+            
+        if display_lidar:
+            lastax = ax.scatter(lidar_theta, lidar_dist, color='y')
+        plt.pause(0.1)
+    ecal_core.finalize()
 
-
-  # Just don't exit
-
-
-
-  
-  # finalize eCAL API
-ecal_core.finalize()
-"""
-"""
-        if('line' in locals()):
-            line.remove()
-        line = ax.scatter(angles, distances, c="pink", s=5)
-
-        ax.set_theta_offset(math.pi / 2)
-        plt.pause(0.01)
-        angles.clear()
-        distances.clear()
-"""
-
-"""
-r = 3
-   
-rads = np.arange(0, (2 * np.pi), 0.01)
-   
-# plotting the circle
-for i in rads:
-    plt.polar(i, r, 'g.')
-   
-# display the Polar plot
-plt.show()
-"""
