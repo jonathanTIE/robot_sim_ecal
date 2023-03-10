@@ -1,9 +1,9 @@
 import pytest
 import numpy as np
-import PatternFinder 
+import loca_lidar.PatternFinder as PatternFinder
 import FixedPoints as fp
-import CloudPoints as cp
-from  PointsDataStruct import PolarPts, AmalgamePolar
+import loca_lidar.CloudPoints as cp
+from  loca_lidar.PointsDataStruct import PolarPts, AmalgamePolar
 
 ######### Test amalgame discovery from cloud points ############
 
@@ -162,6 +162,42 @@ def test_continuous_amalgame_two():
     empty_amalgame = np.zeros((20,), dtype=AmalgamePolar)
     assert np.array_equal(amalgames, empty_amalgame) #size is 0.18, above 0.15 so we shoudl'nt find amalgame
 
+def test_cone_detection(): 
+    pts_test = np.array([
+        (0.01, 0),
+        (0.01, 1),
+        (0.01, 2),
+        (0.01, 3),
+        (0.01, 4),
+        (0.01, 5),
+        (0.01, 6),
+        (0.01, 7),
+        (0.01, 8),
+        (0.01, 9),
+        (1.0, 10),
+        (1.0, 11),
+        (1.0, 12),
+        (1.0, 13),
+        (0.2, 14),
+        (1.0, 15),
+        (1.0, 16),
+        (1.0, 17),
+        (1.0, 18),
+        (1.0, 19),
+        (1.0, 20),
+        (0.01, 21),
+        (0.01, 22),
+        (0.01, 180),
+        (0.01, 181),
+        (0.01, 182),
+        (0.01, 183),
+        (0.01, 184),
+    ], dtype=PolarPts)
+
+    # TODO : refactor to avoid this test is dependent on config.py
+    basic_filtered = cp.basic_filter_pts(pts_test)
+    assert 2 == cp.obstacle_in_cone(basic_filtered, 0.0)
+    assert 0 == cp.obstacle_in_cone(basic_filtered, 180.0)
 
 ######### Test finding pattern from amalgames
 # maximum error tolerance set for unit tests is 2mm for 2D lidar pose estimation 
@@ -237,5 +273,6 @@ def test_partial_fixed_no_obstacle_1():
 #def test_cloud_points():
     #assert all get_distances()
 if __name__ == "__main__":
-    pytest.main(["-x", ".\\loca_lidar\\launch_tests.py"])
+    test_cone_detection()
+    # pytest.main(["-x", ".\\loca_lidar\\launch_tests.py"])
 

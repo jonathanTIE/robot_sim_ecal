@@ -4,7 +4,7 @@ from itertools import combinations
 
 from math import cos, radians
 import numpy as np
-from PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
+from loca_lidar.PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
     PolarPts_t, AmalgamePolar_t
 import loca_lidar.config as config
 
@@ -26,35 +26,49 @@ def position_filter_pts(pts: PolarPts_t, lidar_x, lidar_y, lidar_theta) -> Polar
     # TODO 1. Add additionnal check with the last known lidar position on the table
     return pts
 
-def obstacle_in_cone(pts: PolarPts_t, angle: float) -> str:
-    angle_to_check = []
+def obstacle_in_cone(pts: PolarPts_t, angle: float) -> int:
+    """_summary_
 
+    Args:
+        pts (PolarPts_t): _description_
+        angle (float): _description_
+
+    Raises:
+        ValueError: angle normalization problem (not in [0, 360])
+
+    Returns:
+        int: 0 : ok, 1 : warning, 2 : stop
+    """
+    angle_to_check = []
+    half_cone = config.cone_angle / 2
     # avoiding checking negative index in pts 
-    if angle >= 0 and angle <= config.cone_angle / 2:
-        angle_to_check = [[0, angle], [angle - config.cone_angle + 360, 360]]
-    elif angle > config.cone_angle / 2 and angle < 360 - config.cone_angle / 2:
-        angle_to_check = [[angle-60, angle], [angle, angle + 60]]
-    elif angle >= 360 - config.cone_angle / 2 and angle <= 360:
-        angle_to_check = [[angle, 360], [0, angle + config.cone_angle - 360]]
+    if angle >= 0 and angle <= half_cone:
+        angle_to_check = [[0, angle + half_cone], [360 - half_cone + angle, 360]]
+    elif angle > half_cone and angle < 360 - half_cone:
+        angle_to_check = [[angle- half_cone, angle], [angle, angle + half_cone]]
+    elif angle >= 360 - half_cone and angle <= 360:
+        angle_to_check = [[angle - half_cone, 360], [0, angle + half_cone - 360]]
     else: 
         raise ValueError("angle value given to obstacle_in_cone is not between 0 & 360")
 
     #checking corresponding angle within the range given above
-    obstacles = np.where(
-        ( #check valid angle
-            (pts['angle'] > angle_to_check[0][0] and pts['angle'] < angle_to_check[0][1]) or
-            (pts['angle'] > angle_to_check[1][0] and pts['angle'] < angle_to_check[1][1])
-        ) and #check distance
-        pts['distance'] < config.cone_warning_dist
-    )
+    obstacles = pts[np.where(
+        np.logical_and(
+            np.logical_or( # check valid angle
+                np.logical_and(pts['angle'] > angle_to_check[0][0], pts['angle'] < angle_to_check[0][1]),
+                np.logical_and(pts['angle'] > angle_to_check[1][0], pts['angle'] < angle_to_check[1][1])
+            ),
+            pts['distance'] < config.cone_warning_dist #check distance
+        )
+    )]
 
     # check the minimal distance from the detected obstacle in cone
-    if np.argmin(obstacles) < config.cone_stop_dist:
-        return "STOP"
-    elif obstacles.size == 0:
-        return "OK"
+    if obstacles.size == 0:
+        return 0 # OK
+    elif np.argmin(obstacles['distance']) < config.cone_stop_dist:
+        return 2 # STOP
     else:
-        return "WARNING"
+        return 1 # WARNING
 
 #https://math.stackexchange.com/questions/1506706/how-to-calculate-the-distance-between-two-points-with-polar-coordinates
 def get_squared_dist_polar(pt1, pt2):
@@ -127,9 +141,8 @@ def _fusion_amalgames(amalgame1:AmalgamePolar_t, amalgame2:AmalgamePolar_t, angl
     return amalgame1
 
 def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
-    amalgames = np.zeros((20, ), dtype=AmalgamePolar) # Hypothesis that we won't detect more than 20 valid amalgames per scan
+    amalgames = np.zeros((30, ), dtype=AmalgamePolar) # Hypothesis that we won't detect more than 20 valid amalgames per scan
     amalg_i, amalg_pt_count = 0, 0
-
     #TODO : optimize below using numpy
     # Known limitation : if an amalgame made of two points is present only at the beggining and end of filtered scan, it won't be detected
     # But we consider that an amalgame should be made of at least three points
@@ -149,7 +162,8 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
         # if next point is not part of the amalgame currently being discovered, finish it
         # or if finishing pts
         if (get_squared_dist_polar(cur_pt, pt) > config.amalgame_squared_dist_max
-            or i == pts.size - 1): # this condition makes sure to finish the last amalgame if reaching the end of the pts list
+            or i == pts.size - 1 # this condition makes sure to finish the last amalgame if reaching the end of the pts list
+            or amalg_pt_count >= config.amalg_max_nb_pts - 1): # Prevents IndexError if an amalgame is too big. 
             if amalg_pt_count >= 1:
                 #calculate rel center & size : 
                 amalgames[amalg_i] = _fill_amalgame(amalgames[amalg_i])
@@ -169,9 +183,11 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
     if amalg_i > 1: #if more than 2 amalgames detected
         #get index of last point added to amalgame
         last_i = np.max(np.nonzero(amalgames[amalg_i-1]['list_pts']['distance']))
+        first_amalg_last_i = np.max(np.nonzero(amalgames[0]['list_pts']['distance']))
         first_pt_first_amalg = amalgames[0]['list_pts'][0]
         last_pt_last_amalg = amalgames[amalg_i-1]['list_pts'][last_i]
-        if get_squared_dist_polar(first_pt_first_amalg, last_pt_last_amalg) <= config.amalgame_squared_dist_max:
+        if (get_squared_dist_polar(first_pt_first_amalg, last_pt_last_amalg) <= config.amalgame_squared_dist_max
+            and first_amalg_last_i + last_i <= config.amalg_max_nb_pts - 1): # Avoid fusion of amalgame if the number of points will be too big
             amalgames[0] = _fusion_amalgames(amalgames[0], amalgames[amalg_i-1])
             amalgames[amalg_i-1] = np.zeros((1, ))
 

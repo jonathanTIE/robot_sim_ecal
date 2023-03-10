@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import sys
-import lidar_data_pb2 as lidar_data
+import loca_lidar.lidar_data_pb2 as lidar_data
 import time
 
 
@@ -77,6 +77,7 @@ if __name__ == "__main__":
     #Tuple of cloud points to display
     cloud_pts = (
         LidarCloudDisplay(fig, 'lidar_data', 'y', 0.1),
+        LidarCloudDisplay(fig, "lidar_filtered", 'g', 0.3),
     )
     # Init matplotlib plot
     plt.show(block=False)

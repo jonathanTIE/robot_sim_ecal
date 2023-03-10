@@ -1,4 +1,4 @@
-import PointsDataStruct as pt
+import loca_lidar.PointsDataStruct as pt
 import numpy as np
 from itertools import combinations
 from functools import cache

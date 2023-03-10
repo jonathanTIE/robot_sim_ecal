@@ -1,9 +1,9 @@
 from math import isclose, radians, pi, atan, degrees
 from functools import cache
 import numpy as np
-import CloudPoints as cp
+import loca_lidar.CloudPoints as cp
 import FixedPoints as fp
-from PointsDataStruct import CartesianPts
+from loca_lidar.PointsDataStruct import CartesianPts
 import time
 import logging
 
