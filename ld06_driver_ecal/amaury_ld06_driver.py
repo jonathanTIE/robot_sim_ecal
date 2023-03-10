@@ -103,8 +103,8 @@ class Driver:
 
                     if angle >= 360:
                         angle -= 360
-
-                    self.cloud.add(distance, angle)
+                    distance_meter = distance / 1000 # conversion mm to m
+                    self.cloud.add(distance_meter, angle)
 
                 if self.total_angle >= 360:
                     # The points are back to the beginning
