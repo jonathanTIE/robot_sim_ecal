@@ -23,6 +23,12 @@ class Cloud:
             self.distances.append(distance)
             self.angles.append(angle)
 
+    def reverse(self): 
+        self.distances.reverse()
+        self.angles.reverse()
+        # self.min_angle = self.angles[0]
+        # self.max_angle = self.angles[1]
+
     def filter(self, distance):
         # Return True if the point should be kept, False otherwise
         return True
@@ -99,12 +105,18 @@ class Driver:
                 for i in range(self.count):
                     distance = struct.unpack('<H', message_data[3*i:3*i+2])[0]
                     quality = struct.unpack('<B', message_data[3*i+2:3*i+3])[0]
-                    angle = start_angle + i * step
+                    angle_clkwise = start_angle + i * step
 
-                    if angle >= 360:
-                        angle -= 360
+                    if angle_clkwise >= 360:
+                        angle_clkwise -= 360
+
+                    # conversion from clockwise to anticlockwise/trigonometric angle
+                    angle_anticlkwise = 360 - angle_clkwise
                     distance_meter = distance / 1000 # conversion mm to m
-                    self.cloud.add(distance_meter, angle)
+                    self.cloud.add(distance_meter, angle_anticlkwise)
+
+                # conversion from clockwise to anticlockwise/trigonometric angle
+                self.cloud.reverse()
 
                 if self.total_angle >= 360:
                     # The points are back to the beginning

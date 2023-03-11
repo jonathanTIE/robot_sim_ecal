@@ -25,7 +25,6 @@ class LidarCloudDisplay():
         self.color = color
 
         # Drawing cloudpoint
-        self.ax = fig.add_subplot(projection='polar')
         self.button_ax = fig.add_axes([0.005, y_button, 0.1, 0.1])
         self.button_ax.get_xaxis().set_visible(False)
         self.button_ax.get_yaxis().set_visible(False)
@@ -54,6 +53,7 @@ class LidarCloudDisplay():
 
 plt.style.use('ggplot')
 fig = plt.figure()
+ax = fig.add_subplot(projection='polar')
 
 # on_lidar_scan
 
@@ -75,19 +75,21 @@ if __name__ == "__main__":
     #Tuple of cloud points to display
     cloud_pts = (
         LidarCloudDisplay(fig, 'lidar_data', 'y', 0.1),
-        LidarCloudDisplay(fig, "lidar_filtered", 'g', 0.3),
+        LidarCloudDisplay(fig, 'lidar_filtered', 'g', 0.3),
+        LidarCloudDisplay(fig, 'amalgames', 'b', 0.5),
     )
     # Init matplotlib plot
     plt.show(block=False)
     while ecal_core.ok():
+        ax.cla() # clear last cloud points
+        ax.set_theta_zero_location("N") # North
+        # https://stackoverflow.com/questions/26906510/rotate-theta-0-on-matplotlib-polar-plot
+        ax.set_theta_direction(-1) # TODO rechange from clockwise ?
+        ax.set_ylim([0, 3.1]) # maximum is 3 m after basic filter, so no need to see further
+
         for cloud in cloud_pts: # Plot each cloud point from various data stream
-            cloud.ax.cla() # clear last cloud points
-            cloud.ax.set_theta_zero_location("N") # North
-            # https://stackoverflow.com/questions/26906510/rotate-theta-0-on-matplotlib-polar-plot
-            cloud.ax.set_theta_direction(-1) # TODO rechange from clockwise ?
-            cloud.ax.set_ylim([0, 3100]) # maximum is 3 m after basic filter, so no need to see further
             if cloud.is_displaying: #button clicked or not
-                cloud.ax.scatter(
+                ax.scatter(
                     np.deg2rad(cloud.lidar_theta), 
                     cloud.lidar_dist, 
                     color=cloud.color

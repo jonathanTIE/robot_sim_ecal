@@ -10,12 +10,16 @@ import loca_lidar.CloudPoints as cp
 import loca_lidar.lidar_data_pb2 as lidar_pb
 import loca_lidar.robot_state_pb2 as robot_pb
 from loca_lidar.PointsDataStruct import PolarPts
+import loca_lidar.config as config
 
 """TODO
     - pour la gestion des déplacements sur la carte:
     - la stratégie(module nav) demande: qqun à cet endroit là?
     - le lidar répond: {"oui"; "non"}
 """
+
+blue_beacons = cp.Amalgames()
+blue_beacons.points = tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm)
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
@@ -24,6 +28,8 @@ sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 
 pub_stop_cons = StringPublisher("stop_cons") # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
 pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
+pub_amalgames = ProtoPublisher("amalgames", lidar_pb.Lidar)
+pub_beacons = ProtoPublisher("beacons", lidar_pb.Lidar) # Only up to 5 points are sent, the index correspond to the fixed_point
 
 last_known_moving_angle = 0 #angle in degrees from where the robot is moving 
 last_known_lidar = (0, 0, 0) #x, y, theta (meters, degrees)
@@ -57,6 +63,8 @@ def on_lidar_scan(topic_name, proto_msg, time):
     # TODO : position filter is unimplemented | it returns everything
     send_lidar(pub_filtered_pts, pos_filtered_scan['distance'], pos_filtered_scan['angle']) # Display filtered data for debugging purposes
     amalgames = cp.amalgames_from_cloud(pos_filtered_scan)
+    send_lidar(pub_amalgames, amalgames['center_polar']['distance'], amalgames['center_polar']['angle']) # Display filtered data for debugging purposes
+
    
 if __name__ == "__main__":
 
