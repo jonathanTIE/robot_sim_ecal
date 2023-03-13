@@ -1,9 +1,10 @@
 import pytest
 import numpy as np
-import loca_lidar.PatternFinder as PatternFinder
-import FixedPoints as fp
+import loca_lidar.PatternFinder as pf
 import loca_lidar.CloudPoints as cp
 from  loca_lidar.PointsDataStruct import PolarPts, AmalgamePolar
+import loca_lidar.config as config
+
 
 ######### Test amalgame discovery from cloud points ############
 
@@ -200,26 +201,38 @@ def test_cone_detection():
     assert 0 == cp.obstacle_in_cone(basic_filtered, 180.0)
 
 ######### Test finding pattern from amalgames
+amalgame_sample_1 = (
+    (1.57, 125.67),  
+    (1.59, 237.94), 
+    (1.68, 310.59), #CAREFUL : USE DEGREES ANGLE POSTIVE ONLY
+    (1.62, 337.7),
+    (1.57, 350.22)
+)
+
+amalgame_1 = pf.GroupAmalgame(amalgame_sample_1)
+
+blue_beacons = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm))
+
 # maximum error tolerance set for unit tests is 2mm for 2D lidar pose estimation 
 pos_abs_tol = 0.002 #meters 
 angle_abs_tol = 0.02 #degrees
-finder = PatternFinder.PatternFinder(fp.known_distances(), 0.02)
+finder = pf.LinkFinder(blue_beacons.get_distances(), 0.02)
 
 
 def test_all_fixed_no_obstacle_1():
     # Robot origin is at x~0.5, y~1.5, theta ~32.06° left
     # no other obstacles, approximated lidar reading from geogebra
-    lidar2table = finder.find_pattern(cp.get_distances(cp.amalgame_sample_1))
+    lidar2table = finder.find_pattern(amalgame_1.get_distances())
 
     # verify position
-    lidar_pos = PatternFinder.Triangulate.lidar_pos_wrt_table(
-        lidar2table, cp.amalgame_sample_1, fp.known_points())
+    lidar_pos = pf.Triangulate.lidar_pos_wrt_table(
+        lidar2table, amalgame_sample_1, blue_beacons.points)
     expected_lidar_pos = np.array([0.5, 1.5]).reshape(2, 1)
     assert np.allclose(lidar_pos, expected_lidar_pos, atol=pos_abs_tol)
 
     # verify angle
-    lidar_angle = PatternFinder.Triangulate.lidar_angle_wrt_table(
-        lidar_pos, lidar2table, cp.amalgame_sample_1, fp.known_points())
+    lidar_angle = pf.Triangulate.lidar_angle_wrt_table(
+        lidar_pos, lidar2table, amalgame_sample_1, blue_beacons.points)
     expected_lidar_angle = 32.06
     assert np.isclose(lidar_angle, expected_lidar_angle, angle_abs_tol)
 
@@ -229,37 +242,37 @@ def test_partial_fixed_no_obstacle_1():
     expected_lidar_angle = 32.06
 
     #test amalgame_sample_1 with 4 points :
-    first_four_amalgames = cp.amalgame_sample_1[:4]
-    lidar2table = finder.find_pattern(cp.get_distances(first_four_amalgames))
+    first_four_amalgames = pf.GroupAmalgame(amalgame_sample_1[:4])
+    lidar2table = finder.find_pattern(first_four_amalgames.get_distances())
 
     # verify position
-    lidar_pos = PatternFinder.Triangulate.lidar_pos_wrt_table(
-        lidar2table, first_four_amalgames, fp.known_points())
+    lidar_pos = pf.Triangulate.lidar_pos_wrt_table(
+        lidar2table, first_four_amalgames.points, blue_beacons.points)
     assert np.allclose(lidar_pos, expected_lidar_pos, atol=pos_abs_tol)
 
     # verify angle
-    lidar_angle = PatternFinder.Triangulate.lidar_angle_wrt_table(
-        lidar_pos, lidar2table, first_four_amalgames, fp.known_points())
+    lidar_angle = pf.Triangulate.lidar_angle_wrt_table(
+        lidar_pos, lidar2table, first_four_amalgames.points, blue_beacons.points)
     assert np.isclose(lidar_angle, expected_lidar_angle, angle_abs_tol)
 
     #test amalgame_sample_1 with 3 points:
-    first_three_amalgames = cp.amalgame_sample_1[:3]
-    lidar2table = finder.find_pattern(cp.get_distances(first_three_amalgames))
+    first_three_amalgames = pf.GroupAmalgame(amalgame_sample_1[:3])
+    lidar2table = finder.find_pattern(first_three_amalgames.get_distances())
 
     # verify position
-    lidar_pos = PatternFinder.Triangulate.lidar_pos_wrt_table(
-        lidar2table, first_three_amalgames, fp.known_points())
+    lidar_pos = pf.Triangulate.lidar_pos_wrt_table(
+        lidar2table, first_three_amalgames.points, blue_beacons.points)
     assert np.allclose(lidar_pos, expected_lidar_pos, atol=pos_abs_tol)
 
     # verify angle
-    lidar_angle = PatternFinder.Triangulate.lidar_angle_wrt_table(
-        lidar_pos, lidar2table, first_three_amalgames, fp.known_points())
+    lidar_angle = pf.Triangulate.lidar_angle_wrt_table(
+        lidar_pos, lidar2table, first_three_amalgames.points, blue_beacons.points)
     assert np.isclose(lidar_angle, expected_lidar_angle, angle_abs_tol)
 
     #test amalgame_sample_1 with 2 points:
-    first_two_amalgames = cp.amalgame_sample_1[:2]
+    first_two_amalgames = pf.GroupAmalgame(amalgame_sample_1[:2])
     with pytest.raises(ValueError):
-        lidar2table = finder.find_pattern(cp.get_distances(first_two_amalgames))
+        lidar2table = finder.find_pattern(first_two_amalgames.get_distances())
 
 #TODO : check function lidar_angle_wrt_table with origin of robot aligned x or y axis to the beacon
 
@@ -273,6 +286,11 @@ def test_partial_fixed_no_obstacle_1():
 #def test_cloud_points():
     #assert all get_distances()
 if __name__ == "__main__":
+    test_one_amalgame()
+    test_continuous_amalgame()
+    test_continuous_amalgame_two()
     test_cone_detection()
+    test_all_fixed_no_obstacle_1()
+    test_partial_fixed_no_obstacle_1()
     # pytest.main(["-x", ".\\loca_lidar\\launch_tests.py"])
 
