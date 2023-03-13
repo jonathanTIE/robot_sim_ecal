@@ -7,6 +7,7 @@ from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher, StringPublisher
 
 import loca_lidar.CloudPoints as cp
+import loca_lidar.PatternFinder as pf
 import loca_lidar.lidar_data_pb2 as lidar_pb
 import loca_lidar.robot_state_pb2 as robot_pb
 from loca_lidar.PointsDataStruct import PolarPts
@@ -18,8 +19,7 @@ import loca_lidar.config as config
     - le lidar répond: {"oui"; "non"}
 """
 
-blue_beacons = cp.Amalgames()
-blue_beacons.points = tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm)
+blue_beacons = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm))
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
@@ -52,7 +52,6 @@ def on_moving_angle(topic_name, proto_msg, time):
 def on_lidar_scan(topic_name, proto_msg, time):
     # Obstacle avoidance
     lidar_scan =  np.rec.fromarrays([proto_msg.distances, proto_msg.angles], dtype=PolarPts)
-    lidar_scan['distance'] = lidar_scan['distance'] / 1000 #TODO : REMOVE (its only here for old versiono of lidar driver in mm)
     basic_filtered_scan = cp.basic_filter_pts(lidar_scan)
     obstacle_consigne = cp.obstacle_in_cone(basic_filtered_scan, last_known_moving_angle)
     send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)

@@ -1,6 +1,8 @@
+from typing import NamedTuple
 import numpy as np
 import numpy.typing as npt
 import loca_lidar.config as config
+
 
 CartesianPts = np.dtype([
         ('x', np.float64),
@@ -16,12 +18,6 @@ PolarPts = np.dtype([
 
 PolarPts_t = npt.NDArray[PolarPts]
 
-DistPts = np.dtype([
-        ('pt1', np.int64),
-        ('pt2', np.int64),
-        ('squared_dist', np.float64),
-    ])
-
 AmalgamePolar = np.dtype([
         ('center_polar', PolarPts), 
         ('list_pts', (PolarPts, config.amalg_max_nb_pts)),
@@ -35,6 +31,18 @@ AmalgameCartesian = np.dtype([
     ('list_pts', (CartesianPts, config.amalg_max_nb_pts)),
     ('size', np.float64),
     ])
+
+class DistPts(NamedTuple):
+    pt1: int
+    pt2: int 
+    squared_dist: float
+"""
+DistPts = np.dtype([
+        ('pt1', np.int64),
+        ('pt2', np.int64),
+        ('squared_dist', np.float64),
+    ])
+"""
 
 
 

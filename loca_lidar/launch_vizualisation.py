@@ -84,7 +84,6 @@ if __name__ == "__main__":
         ax.cla() # clear last cloud points
         ax.set_theta_zero_location("N") # North
         # https://stackoverflow.com/questions/26906510/rotate-theta-0-on-matplotlib-polar-plot
-        ax.set_theta_direction(-1) # TODO rechange from clockwise ?
         ax.set_ylim([0, 3.1]) # maximum is 3 m after basic filter, so no need to see further
 
         for cloud in cloud_pts: # Plot each cloud point from various data stream
