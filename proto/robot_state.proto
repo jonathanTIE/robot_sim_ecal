@@ -14,6 +14,7 @@ package enac;
 //
 //KILL_CMD = "Shutdown {}"
 
+// Careful with travel message : don't send all fields at 0 or it might crash on subscriber (empty message)
 message Travel { 
     float theta = 1; // Direction of travel (angle in degrees)
     float speed = 2; // speed of travel (in meters)

@@ -46,10 +46,14 @@ def send_lidar(pub, distances, angles):
     pub.send(lidar_msg, ecal_core.getmicroseconds()[1])
 
 
-def on_moving_angle(topic_name, proto_msg, time):
-    last_known_moving_angle = proto_msg.msg
+def on_moving_angle(topic_name, travel_msg, time):
+    global last_known_moving_angle
+    last_known_moving_angle = travel_msg.theta
+
 
 def on_lidar_scan(topic_name, proto_msg, time):
+    global last_known_moving_angle
+
     # Obstacle avoidance
     lidar_scan =  np.rec.fromarrays([proto_msg.distances, proto_msg.angles], dtype=PolarPts)
     basic_filtered_scan = cp.basic_filter_pts(lidar_scan)
