@@ -1,0 +1,62 @@
+import serial
+import time
+import wave
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import struct
+
+# Serial port configuration
+serial_port = "COM4"  # Replace with the actual serial port
+baud_rate = 1000000
+
+# Open the serial port
+# Read audio data from the serial port
+audio_data = []
+ser = serial.Serial(serial_port, baud_rate,timeout=0.01)
+
+timing = time.time()
+total = 0
+
+audio_data = bytearray()
+
+while True:
+    try:
+        output = ser.read(1024)
+        audio_data.extend(output)
+        if ser.in_waiting >= 1000:
+            print(ser.in_waiting)
+    except ValueError or IndexError as e :
+        print(e)
+    except KeyboardInterrupt:
+        break
+
+ser.close()
+
+buffer = bytearray()
+bytes_data = []
+for byte in audio_data:
+    if byte == 10: #"\n":
+        continue
+    if byte == 43 or byte == 45:
+        try:
+            sound_data = min(32767, int(bytes(buffer)) * 10) # *  is to amplify the sound
+            sound_data = max(-32768, sound_data) #clamp the data to 16 bits
+            bytes_data.append(struct.pack('<h', sound_data))
+        except ValueError as e:
+            print(e)
+        buffer = bytearray()
+    buffer.append(byte)
+
+output_wav_file = "C:\\Users\\Jonathan\\output.wav"
+sample_width = 2
+sample_rate = 30000 #len(audio_data) / (time.time()-a)
+num_channels = 1
+
+with wave.open(output_wav_file, 'wb') as wav_file:
+    wav_file.setnchannels(num_channels)
+    wav_file.setsampwidth(sample_width)
+    wav_file.setframerate(sample_rate)
+    wav_file.writeframes(b''.join(bytes_data))
+
+print('timing', len(bytes_data)/44000)
+print("WAV file saved:", output_wav_file)

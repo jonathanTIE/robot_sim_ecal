@@ -72,10 +72,10 @@ distance2 = 1.09
 distance3 = 2.72
 distance4 = 0.72
 
-toa1 = distance1 / SOUND_SPEED + random() * 0.00005
-toa2 = distance2 / SOUND_SPEED + random() * 0.00005
-toa3 = distance3 / SOUND_SPEED - random() * 0.00005
-toa4 = distance4 / SOUND_SPEED + random() * 0.00005
+toa1 = distance1 / SOUND_SPEED
+toa2 = distance2 / SOUND_SPEED
+toa3 = distance3 / SOUND_SPEED
+toa4 = distance4 / SOUND_SPEED
 
 toa12 = toa2 - toa1
 toa13 = toa3 - toa1
