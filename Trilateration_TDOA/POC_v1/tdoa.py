@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import numpy as np
-from random import random
 
 SOUND_SPEED = 343.2 # m/s
+HEIGHT_SPK = 0.5 # m, height of speaker above microphone
 
 @dataclass
 class Position:
@@ -14,14 +14,22 @@ class Position:
         return np.array([self.x, self.y, self.z])
     
 class Station():
-    def __init__(self, pos:Position, noise=0.0) -> None:
+    def __init__(self, pos:Position) -> None:
         self.pos = pos
-        self.noise = 0.0
     
     def get_toa(self, target:Position) -> float:
-        distance = ((self.pos.x - target.x)**2 + (self.pos.y - target.y)**2 + (self.pos.z - target.z)**2)**0.5
+        distance = ((self.pos.x - target.x)**2 + (self.pos.y - target.y)**2 + (HEIGHT_SPK)**2)**0.5
         return distance / SOUND_SPEED
-        #TODO implement noise
+    
+    def gen_ghost_station(self, station, dist: float): #-> (Station, float)
+        #generate station at same z-height from microphone, in order to have at least 4 stations for tdoa calc
+        new_station = Station(Position(station.pos.x, station.pos.y, 0.0))
+
+        #calculate distance from new station to target using pythagoras
+        new_dist = (dist**2 - HEIGHT_SPK**2)**0.5
+        return (new_station, new_dist) 
+
+
 
 #made with love from chat GPT except matrix
 def trilateration_3d_tdoa(beacon_positions, tdoa):
@@ -31,7 +39,7 @@ def trilateration_3d_tdoa(beacon_positions, tdoa):
     # Check if the number of beacons and TDOA values are valid
     num_beacons = len(beacon_positions)
     if num_beacons < 4 or len(tdoa) < 3:
-        raise ValueError("This trilateration algorithm requires exactly four beacons and three TDOA values.")
+        raise ValueError("This trilateration algorithm requires >= four beacons and >= three TDOA values.")
 
     # Create an empty matrix to hold the equations
     A = np.zeros((num_beacons - 1, 4))
@@ -61,38 +69,39 @@ def trilateration_3d_tdoa(beacon_positions, tdoa):
 
     return x, y, z
 
-station1 = Station(Position(0, 0, 0.5))
-station2 = Station(Position(1.5, 2.0, 0.5))
-station3 = Station(Position(3.0, 0, 0.5))
-station4 = Station(Position(0.0, 0.0, 0))
-station5 = Station(Position(1.5, 2.0, 0.0))
-station6 = Station(Position(3.0, 0.0, 0.0))
 
-#fictive position : (0.63, 1.34)
-distance1 = 0.87
-distance2 = 1.87
-distance3 = 2.6
-distance4 = 0.71
-distance5 = 1.8
-distance6 = 2.55
+if __name__ == "__main__":
+    station1 = Station(Position(0, 0, HEIGHT_SPK))
+    station2 = Station(Position(1.5, 2.0, HEIGHT_SPK))
+    station3 = Station(Position(3.0, 0, HEIGHT_SPK))
 
-toa1 = distance1 / SOUND_SPEED
-toa2 = distance2 / SOUND_SPEED
-toa3 = distance3 / SOUND_SPEED
-toa4 = distance4 / SOUND_SPEED
-toa5 = distance5 / SOUND_SPEED
-toa6 = distance6 / SOUND_SPEED
+    #fictive position : (0.5, 0.5)
+    distance1 = 0.87
+    distance2 = 1.87
+    distance3 = 2.6
 
-toa12 = toa2 - toa1
-toa13 = toa3 - toa1
-toa14 = toa4 - toa1
-toa15 = toa5 - toa1
-toa16 = toa6 - toa1
+    toa1 = distance1 / SOUND_SPEED
+    toa2 = distance2 / SOUND_SPEED
+    toa3 = distance3 / SOUND_SPEED
 
-tri = trilateration_3d_tdoa([
-    station1.pos.to_array(), station2.pos.to_array(), station3.pos.to_array(), 
-    station4.pos.to_array(), station5.pos.to_array(), station6.pos.to_array()], 
-    [toa12, toa13, toa14, toa15, toa16])
+    toa12 = toa2 - toa1
+    toa13 = toa3 - toa1
 
-print(tri)
+    #"real" experiment : 
+    tdoa12 = toa2 - toa1
+    tdoa13 = toa3 - toa1
+
+    
+    #station4, distance4 = station1.gen_ghost_station(station1, distance1)
+    #station5, distance5 = station2.gen_ghost_station(station2, distance2)
+    #station6, distance6 = station3.gen_ghost_station(station3, distance3)
+
+
+
+    tri = trilateration_3d_tdoa([
+        station1.pos.to_array(), station2.pos.to_array(), station3.pos.to_array(),
+        station4.pos.to_array(), station5.pos.to_array(), station6.pos.to_array()], 
+        [toa12, toa13, toa14, toa15, toa16])
+
+    print(tri)
 
