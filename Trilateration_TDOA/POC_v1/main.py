@@ -1,4 +1,4 @@
-from tdoa import Station, Position, HEIGHT_SPK, trilateration_3d_tdoa
+from Trilateration_TDOA.POC_v1.tdoa_old import Station, Position, HEIGHT_SPK, trilateration_3d_tdoa
 
 ####DECODER SETTINGS ####
 

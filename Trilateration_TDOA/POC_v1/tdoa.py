@@ -1,107 +1,65 @@
-from dataclasses import dataclass
 import numpy as np
+import scipy.optimize as opt
+import time
 
 SOUND_SPEED = 343.2 # m/s
-HEIGHT_SPK = 0.5 # m, height of speaker above microphone
 
-@dataclass
-class Position:
-    x: float
-    y: float
-    z: float
+#SOURCE : https://lo.calho.st/posts/tdoa-multilateration/
+#TODO : jacobian shit
+def sqrt_safe(a, b, c, d, Z):
+    temp = 0
+    out = np.power(a - b, 2.) + np.power(c - d, 2.) + Z
+    temp = np.sqrt(out)
+    if np.isnan(temp):
+        return 0
+    return temp
 
-    def to_array(self):
-        return np.array([self.x, self.y, self.z])
-    
-class Station():
-    def __init__(self, pos:Position) -> None:
-        self.pos = pos
-    
-    def get_toa(self, target:Position) -> float:
-        distance = ((self.pos.x - target.x)**2 + (self.pos.y - target.y)**2 + (HEIGHT_SPK)**2)**0.5
-        return distance / SOUND_SPEED
-    
-    def gen_ghost_station(self, station, dist: float): #-> (Station, float)
-        #generate station at same z-height from microphone, in order to have at least 4 stations for tdoa calc
-        new_station = Station(Position(station.pos.x, station.pos.y, 0.0))
+def functions(x0, y0, x1, y1, x2, y2, d01, d02, d12, Z):
+    """ Given observers at (x0, y0), (x1, y1), (x2, y2) and TDOA between observers d01, d02, d12, this closure
+        returns a function that evaluates the system of three hyperbolae for given event x, y.
+    """
+    def fn(args):
+        x, y = args
+        a = sqrt_safe(x,x1, y,y1, Z) - sqrt_safe(x, x0, y, y0, Z) - d01
+        b = sqrt_safe(x,x2, y,y2, Z) - sqrt_safe(x, x0, y, y0, Z) - d02
+        c = sqrt_safe(x,x2, y,y2, Z) - sqrt_safe(x, x1, y, y1, Z) - d12
+        return [a, b, c]
+    return fn
 
-        #calculate distance from new station to target using pythagoras
-        new_dist = (dist**2 - HEIGHT_SPK**2)**0.5
-        return (new_station, new_dist) 
+def find_position(tdoas):
+    Z = 0.25
 
+    x0, y0 = 0.0, 0.0
+    x1, y1 = 1.50, 2.0
+    x2, y2 = 3.00, 0.0
 
-
-#made with love from chat GPT except matrix
-def trilateration_3d_tdoa(beacon_positions, tdoa):
-    # beacon_positions: List of 3D positions of the beacons [(x1, y1, z1), (x2, y2, z2), (x3, y3, z3), (x4, y4, z4)]
-    # tdoa: List of TDOA values between the beacons [tdoa_12, tdoa_13, tdoa_14]
-
-    # Check if the number of beacons and TDOA values are valid
-    num_beacons = len(beacon_positions)
-    if num_beacons < 4 or len(tdoa) < 3:
-        raise ValueError("This trilateration algorithm requires >= four beacons and >= three TDOA values.")
-
-    # Create an empty matrix to hold the equations
-    A = np.zeros((num_beacons - 1, 4))
-
-    # Create an empty vector to hold the known TDOA values
-    b = np.zeros((num_beacons - 1, 1))
-
-    # Iterate over the beacons (except the first one)
-    # matrix from https://math.stackexchange.com/questions/1722021/trilateration-using-tdoa
-
-    for i in range(1, num_beacons):
-        delta_position = np.array(beacon_positions[0]) - np.array(beacon_positions[i])
-        A[i - 1, :-1] = 2 * delta_position
-        A[i -1, -1] = 2 * SOUND_SPEED * tdoa[i - 1]
-
-        b[i - 1] = np.sum(np.square(np.array(beacon_positions[0]))) \
-            - np.sum(np.square(np.array(beacon_positions[i]))) \
-            + np.square(SOUND_SPEED * tdoa[i - 1])
-        
-    # Solve the system of equations using least squares
-    result, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
-
-    # Calculate the 3D position of the mobile object
-    x = beacon_positions[0][0] + result[0][0]
-    y = beacon_positions[0][1] + result[1][0]
-    z = beacon_positions[0][2] + result[2][0]
-
-    return x, y, z
-
+    xp, yp = 1.51, 1.5
+    F = functions(x0, y0, x1, y1, x2, y2, (tdoas[0]) * SOUND_SPEED, (tdoas[1]) * SOUND_SPEED, (tdoas[2]) * SOUND_SPEED, Z)
+    x, y = opt.leastsq(
+        F, 
+        x0=[xp, yp])
+    return (x,y)
 
 if __name__ == "__main__":
-    station1 = Station(Position(0, 0, HEIGHT_SPK))
-    station2 = Station(Position(1.5, 2.0, HEIGHT_SPK))
-    station3 = Station(Position(3.0, 0, HEIGHT_SPK))
+    x0, y0 = 0.0, 0.0
+    x1, y1 = 1.50, 2.0
+    x2, y2 = 3.00, 0.0
 
-    #fictive position : (0.5, 0.5)
-    distance1 = 0.87
-    distance2 = 1.87
-    distance3 = 2.6
+    distance1 = 2.34
+    distance2 = 1.04
+    distance3 = 1.68
 
-    toa1 = distance1 / SOUND_SPEED
-    toa2 = distance2 / SOUND_SPEED
-    toa3 = distance3 / SOUND_SPEED
+    t0 = distance1 / SOUND_SPEED
+    t1 = distance2 / SOUND_SPEED
+    t2 = distance3 / SOUND_SPEED
 
-    toa12 = toa2 - toa1
-    toa13 = toa3 - toa1
+    Z = 0.25 #(z-zbeacon)²
 
-    #"real" experiment : 
-    tdoa12 = toa2 - toa1
-    tdoa13 = toa3 - toa1
-
-    
-    #station4, distance4 = station1.gen_ghost_station(station1, distance1)
-    #station5, distance5 = station2.gen_ghost_station(station2, distance2)
-    #station6, distance6 = station3.gen_ghost_station(station3, distance3)
-
-
-
-    tri = trilateration_3d_tdoa([
-        station1.pos.to_array(), station2.pos.to_array(), station3.pos.to_array(),
-        station4.pos.to_array(), station5.pos.to_array(), station6.pos.to_array()], 
-        [toa12, toa13, toa14, toa15, toa16])
-
-    print(tri)
-
+    t = time.time()
+    xp, yp = 1.51, 1.5
+    F = functions(x0, y0, x1, y1, x2, y2, (t1 - t0) * SOUND_SPEED, (t2 - t0) * SOUND_SPEED, (t2 - t1) * SOUND_SPEED, Z)
+    x, y = opt.leastsq(
+        F, 
+        x0=[xp, yp])
+    print(time.time() - t)
+    print(x,y )
