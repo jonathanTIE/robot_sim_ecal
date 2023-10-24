@@ -1,6 +1,8 @@
 import wave
 import numpy as np
 
+# !!!!!!!!!!!!!!!!! NOT UPDATED WITH CONFIG !!!!!!!!!!!!!!!!!!!
+
 # Create an array of audio samples
 sample_width = 2  # 2 bytes for 16-bit audio
 sample_rate = 44100  # sample rate in Hz

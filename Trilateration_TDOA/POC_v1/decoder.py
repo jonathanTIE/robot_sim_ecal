@@ -5,33 +5,29 @@ import scipy.signal as signal
 import time
 import struct
 import tdoa
+
 #Read the wav file and put it in a list
 
-output_wav_file = "C:\\Users\\Jonathan\\Downloads\\PN_7500.wav"
-intput_wav_file = "C:\\Users\\Jonathan\\Downloads\\PN_7500.wav"
-inted_frames = []
-intput_frames = []
-with wave.open(output_wav_file, 'rb') as wav_file:
-    # Get basic information.
-    nchannels = wav_file.getnchannels()
-    sampwidth = wav_file.getsampwidth()
-    framerate = wav_file.getframerate()
-    nframes = wav_file.getnframes()
+output_wav_file = "C:\\Users\\Jonathan\\Downloads\\PN_7500_rec.wav"
+input_wav_file = "C:\\Users\\Jonathan\\Downloads\\rec_6.wav"
 
-    for i in range(nframes):
-        frame = wav_file.readframes(1)
-        inted_frames.append(struct.unpack('<h', frame)[0])
+def read_wav(fname: str) -> [int]:
+    frames = []
+    with wave.open(fname, 'rb') as wav_file:
+        # Get basic information.
+        nchannels = wav_file.getnchannels()
+        sampwidth = wav_file.getsampwidth()
+        framerate = wav_file.getframerate()
+        nframes = wav_file.getnframes()
 
-with wave.open(intput_wav_file, 'rb') as wav_file:
-    # Get basic information.
-    nchannels = wav_file.getnchannels()
-    sampwidth = wav_file.getsampwidth()
-    framerate = wav_file.getframerate()
-    nframes = wav_file.getnframes()
+        for i in range(nframes):
+            frame = wav_file.readframes(1)
+            frames.append(struct.unpack('<h', frame)[0])
+        return frames
 
-    for i in range(nframes):
-        frame = wav_file.readframes(1)
-        intput_frames.append(struct.unpack('<h', frame)[0])
+# /32768 -> -1 to 1 or else cross correlation won't work 
+reference = (np.array(read_wav(input_wav_file))  / 32768).astype(np.float16)
+analyzed = (np.array(read_wav(output_wav_file))  / 32768).astype(np.float16)
 
 
 def calculate_tdoa(indexs: [int], delay_sample: float, delay_emission: float) -> [float]:
@@ -48,16 +44,8 @@ def calculate_tdoa(indexs: [int], delay_sample: float, delay_emission: float) ->
 
     return [tdoa1, tdoa2, tdoa3]
 
-duration = 0.00084
-sample_rate = 44100
-f = 7500
-f_2 = 4987
 
-
-reference_signal = np.sin(2 * np.pi * np.arange(sample_rate * duration) * f / sample_rate) * 0.5
-reference_signal += (np.sin(2 * np.pi * np.arange(sample_rate * duration) * f_2 / sample_rate) * 0.5)
-
-cross_correlation = np.correlate(inted_frames, intput_frames, mode='full')
+cross_correlation = np.correlate(reference, analyzed, mode='full')
 
 anal_buff = 205 # 0.01s
 threshold = 2500	
@@ -67,6 +55,7 @@ min_t_delay = 0.005 #s (close to 0ms)
 max_t_delay = 0.025 #s (close to 30 ms <=> 5m distance)
 delay_emission = 0.015
 expected_signals = 3
+sample_rate = 44100
 delay_sample = 1/sample_rate
 buffer = []
 threshold = 2800
@@ -104,7 +93,6 @@ for i in range(0, max_i_for_iter, anal_buff):
 
 print(buffer)
 #plot filtered frames
-print("nframes", nframes)
 print(len(cross_correlation))
 plt.plot(cross_correlation)
 plt.show()
